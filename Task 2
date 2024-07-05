@@ -1,0 +1,119 @@
+// Code 2 (i)
+
+
+module simple_fsm (
+input wire clk,
+input wire reset,
+input wire in,
+output reg [1:0] state
+);
+
+// State encoding
+localparam IDLE = 2'b00;
+localparam STATE1 = 2'b01;
+localparam STATE2 = 2'b10;
+
+// State register
+reg [1:0] current_state, next_state;
+
+// Sequential logic for state transitions
+always @(posedge clk or posedge reset) begin
+if (reset)
+current_state <= IDLE;
+else
+current_state <= next_state;
+end
+
+// Combinational logic for next state
+always @(*) begin
+case (current_state)
+IDLE:
+if (in)
+next_state = STATE1;
+else
+next_state = IDLE;
+STATE1:
+if (in)
+next_state = STATE2;
+else
+next_state = IDLE;
+STATE2:
+if (in)
+next_state = STATE2;
+else
+next_state = IDLE;
+default:
+next_state = IDLE;
+endcase
+end
+
+// Output logic
+always @(*) begin
+state = current_state;
+end
+
+endmodule
+
+
+
+
+
+
+
+
+// Code 2 (ii)TESTBENCH
+
+module simple_fsm_tb;
+
+// Inputs
+reg clk;
+reg reset;
+reg in;
+
+// Outputs
+wire [1:0] state;
+
+// Instantiate the FSM
+simple_fsm uut (
+.clk(clk),
+.reset(reset),
+.in(in),
+.state(state)
+);
+
+// Clock generation
+always #5 clk = ~clk;
+
+initial begin
+// Initialize inputs
+clk = 0;
+reset = 0;
+in = 0;
+
+// Apply reset
+reset = 1;
+#10;
+reset = 0;
+
+// Test sequence
+#10 in = 1; // Move to STATE1
+#10 in = 1; // Move to STATE2
+#10 in = 0; // Move back to IDLE
+#10 in = 1; // Move to STATE1
+#10 in = 0; // Move back to IDLE
+#10 in = 1; // Move to STATE1
+#10 in = 1; // Move to STATE2
+#10 in = 1; // Stay in STATE2
+#10 in = 0; // Move back to IDLE
+#10;
+
+// Finish simulation
+$finish;
+end
+
+initial begin
+// Monitor signals
+$monitor("Time: %0d, Reset: %b, In: %b, State: %b", $time, reset, in, state);
+end
+
+endmodule
